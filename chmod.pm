@@ -13,7 +13,7 @@ require Exporter;
 @EXPORT = qw( chmod getchmod );
 @EXPORT_OK = qw( symchmod lschmod getsymchmod getlschmod getmod );
 
-$VERSION = '0.10';
+$VERSION = '0.11';
 $DEBUG = 1;
 
 my %r = ('or' => [0,0400,0040,0004], 'full' => [0,0700,0070,0007]);
@@ -21,9 +21,7 @@ my %w = ('or' => [0,0200,0020,0002], 'full' => $r{'full'});
 my %x = ('or' => [0,0100,0010,0001], 'full' => $r{'full'});
 
 
-sub SYM (){ 1 }
-
-sub LS (){ 2 }
+my ($SYM,$LS) = (1,2);
 
 
 sub getmod {
@@ -46,8 +44,8 @@ sub chmod {
 	my $how = determine_mode($mode);
 	my @files = @_;
 
-	return symchmod($mode,@files) if $how == SYM;
-	return lschmod($mode,@files) if $how == LS;
+	return symchmod($mode,@files) if $how == $SYM;
+	return lschmod($mode,@files) if $how == $LS;
 
 	return CORE::chmod($mode, @files);
 }
@@ -57,8 +55,8 @@ sub getchmod {
 	my $how = determine_mode($mode);
 	my @files = @_;
 
-	return getsymchmod($mode,@files) if $how == SYM;
-	return getlschmod($mode,@files) if $how == LS;
+	return getsymchmod($mode,@files) if $how == $SYM;
+	return getlschmod($mode,@files) if $how == $LS;
 
 	return wantarray ? (($mode) x @files) : $mode;
 }
@@ -80,7 +78,7 @@ sub getsymchmod {
 	my @files = @_;
 	my @return;
 
-	(determine_mode() != SYM) && do {
+	(determine_mode($mode) != $SYM) && do {
 		warn "symchmod received non-symbolic mode: $mode";
 		return 0;
 	};
@@ -173,7 +171,7 @@ sub getlschmod {
 	my $mode = shift;
 	my @files = @_;
 
-	(determine_mode() != LS) && do {
+	(determine_mode($mode) != $LS) && do {
 		warn "lschmod received non-ls mode: $mode";
 		return 0;
 	};
@@ -213,10 +211,10 @@ sub getlschmod {
 sub determine_mode {
 	my $mode = shift;
 	return 0 if $mode !~ /\D/;
-	return SYM if $mode =~ /[augo=+,]/;
-	return LS if $mode =~ /ST/;
-	return LS if length($mode) == 10;
-	return SYM;
+	return $SYM if $mode =~ /[augo=+,]/;
+	return $LS if $mode =~ /ST/;
+	return $LS if length($mode) == 10;
+	return $SYM;
 }
 
 
