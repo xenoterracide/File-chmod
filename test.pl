@@ -21,9 +21,9 @@ print "ok 1\n";
 printf "original state of chmod.pm: %05o\n", getmod("chmod.pm");
 
 print "calling: chmod('+x', 'chmod.pm')... ";
-chmod("+x","chmod.pm");
+chmod("+x","chmod.pm") or warn "couldn't chmod +x chmod.pm: $!";
 printf "chmod.pm: %05o\n", getmod("chmod.pm");
 
 print "calling: chmod('-x', 'chmod.pm')... ";
-chmod("-x","chmod.pm");
+chmod("-x","chmod.pm") or warn "couldn't chmod -x chmod.pm: $!";
 printf "chmod.pm: %05o\n", getmod("chmod.pm");

@@ -13,7 +13,7 @@ require Exporter;
 @EXPORT = qw( chmod getchmod );
 @EXPORT_OK = qw( symchmod lschmod getsymchmod getlschmod getmod );
 
-$VERSION = '0.30';
+$VERSION = '0.31';
 $DEBUG = 1;
 $UMASK = 1;
 $MASK = umask;
@@ -34,7 +34,7 @@ my %ERROR = (
 
 
 sub getmod {
-	my @return = map (stat)[2] & 07777, @_;
+	my @return = map { (stat)[2] & 07777 } @_;
 	return wantarray ? @return : $return[0];
 }
 
@@ -62,7 +62,9 @@ sub getchmod {
 sub symchmod {
 	my $mode = shift;
 	my @return = getsymchmod($mode,@_);
-	return scalar grep CORE::chmod(shift(@return),$_), @_;
+	my $ret = 0;
+	for (@_){ $ret++ if CORE::chmod(shift(@return),$_) }
+	return $ret;
 }
 
 
@@ -89,7 +91,7 @@ sub getsymchmod {
 
 				if (/[-+=]/){
 					$W ||= 7;
-					$or = (/=+/ ? 1 : 0);
+					$or = (/[=+]/ ? 1 : 0);
 					clear() if /=/;
 					next;
 				}
@@ -97,15 +99,15 @@ sub getsymchmod {
 				croak "Bad mode $this" if not defined $or;
 				croak "Unknown mode: $mode" if !/[ugorwxslt]/;
 
-				/u/ && $or ? u_or() : u_not();
-				/g/ && $or ? g_or() : g_not();
-				/o/ && $or ? o_or() : o_not();
-				/r/ && $or ? r_or() : r_not();
-				/w/ && $or ? w_or() : w_not();
-				/x/ && $or ? x_or() : x_not();
-				/s/ && $or ? s_or() : s_not();
-				/l/ && $or ? l_or() : l_not();
-				/t/ && $or ? t_or() : t_not();
+				/u/ and $or ? u_or() : u_not();
+				/g/ and $or ? g_or() : g_not();
+				/o/ and $or ? o_or() : o_not();
+				/r/ and $or ? r_or() : r_not();
+				/w/ and $or ? w_or() : w_not();
+				/x/ and $or ? x_or() : x_not();
+				/s/ and $or ? s_or() : s_not();
+				/l/ and $or ? l_or() : l_not();
+				/t/ and $or ? t_or() : t_not();
 			}
 		}
 		$VAL &= ~$MASK if $UMASK;
@@ -117,12 +119,7 @@ sub getsymchmod {
 
 sub lschmod {
 	my $mode = shift;
-
-	local $VAL;
-
-	$VAL = getlschmod($mode,@_);
-
-	return CORE::chmod($VAL,@_);
+	return CORE::chmod(getlschmod($mode,@_),@_);
 }
 
 
@@ -169,7 +166,7 @@ sub mode {
 
 
 sub determine_mode {
-	carp $ERROR{EDECMOD};
+	warn $ERROR{EDECMOD};
 	mode(@_);
 }
 
@@ -229,33 +226,33 @@ sub o_not {
 sub r_or {
 	$W & 1 and $VAL |= 0400;
 	$W & 2 and $VAL |= 0040;
-	$W & 3 and $VAL |= 0004;
+	$W & 4 and $VAL |= 0004;
 }
 
 
 sub r_not {
 	$W & 1 and $VAL &= ~0400;
 	$W & 2 and $VAL &= ~0040;
-	$W & 3 and $VAL &= ~0004;
+	$W & 4 and $VAL &= ~0004;
 }
 
 
 sub w_or {
 	$W & 1 and $VAL |= 0200;
 	$W & 2 and $VAL |= 0020;
-	$W & 3 and $VAL |= 0002;
+	$W & 4 and $VAL |= 0002;
 }
 
 
 sub w_not {
 	$W & 1 and $VAL &= ~0200;
 	$W & 2 and $VAL &= ~0020;
-	$W & 3 and $VAL &= ~0002;
+	$W & 4 and $VAL &= ~0002;
 }
 
 
 sub x_or {
-	if ($VAL & 02000){ $DEBUG and carp($ERROR{ENEXLOC}), return }
+	if ($VAL & 02000){ $DEBUG and warn($ERROR{ENEXLOC}), return }
 	$W & 1 and $VAL |= 0100;
 	$W & 2 and $VAL |= 0010;
 	$W & 4 and $VAL |= 0001;
@@ -270,25 +267,25 @@ sub x_not {
 
 
 sub s_or {
-	if ($VAL & 02000){ $DEBUG and carp($ERROR{ENSGLOC}), return }
-	if (not $VAL & 00100){ $DEBUG and carp($ERROR{ENEXUID}), return }
-	if (not $VAL & 00010){ $DEBUG and carp($ERROR{ENEXGID}), return }
+	if ($VAL & 02000){ $DEBUG and warn($ERROR{ENSGLOC}), return }
+	if (not $VAL & 00100){ $DEBUG and warn($ERROR{ENEXUID}), return }
+	if (not $VAL & 00010){ $DEBUG and warn($ERROR{ENEXGID}), return }
 	$W & 1 and $VAL |= 04000;
 	$W & 2 and $VAL |= 02000;
-	$W & 4 and $DEBUG and carp $ERROR{ENULSID};
+	$W & 4 and $DEBUG and warn $ERROR{ENULSID};
 }
 
 
 sub s_not {
 	$W & 1 and $VAL &= ~04000;
 	$W & 2 and $VAL &= ~02000;
-	$W & 4 and $DEBUG and carp $ERROR{ENULSID};
+	$W & 4 and $DEBUG and warn $ERROR{ENULSID};
 }
 
 
 sub l_or {
-	if ($VAL & 02010){ $DEBUG and carp($ERROR{ENLOCSG}), return }
-	if ($VAL & 00010){ $DEBUG and carp($ERROR{ENLOCEX}), return }
+	if ($VAL & 02010){ $DEBUG and warn($ERROR{ENLOCSG}), return }
+	if ($VAL & 00010){ $DEBUG and warn($ERROR{ENLOCEX}), return }
 	$VAL |= 02000;
 }
 
@@ -300,15 +297,15 @@ sub l_not {
 
 sub t_or {
 	$W & 1 and $VAL |= 01000;
-	$W & 2 and $DEBUG and carp $ERROR{ENULSBG};
-	$W & 4 and $DEBUG and carp $ERROR{ENULSBO};
+	$W & 2 and $DEBUG and warn $ERROR{ENULSBG};
+	$W & 4 and $DEBUG and warn $ERROR{ENULSBO};
 }
 
 
 sub t_not {
 	$W & 1 and $VAL &= ~01000;
-	$W & 2 and $DEBUG and carp $ERROR{ENULSBG};
-	$W & 4 and $DEBUG and carp $ERROR{ENULSBO};
+	$W & 2 and $DEBUG and warn $ERROR{ENULSBG};
+	$W & 4 and $DEBUG and warn $ERROR{ENULSBO};
 }
 
 
@@ -322,7 +319,7 @@ File::chmod - Implements symbolic and ls chmod modes
 
 =head1 VERSION
 
-This is File::chmod v0.30.
+This is File::chmod v0.31.
 
 =head1 SYNOPSIS
 
@@ -446,11 +443,11 @@ Returns a list of the current mode of each file.
 
 =item $File::chmod::DEBUG
 
-If set to a true value, it will report carpings, similar to those produced
+If set to a true value, it will report warnings, similar to those produced
 by chmod() on your system.  Otherwise, the functions will not report errors.
 Example: a file can not have file-locking and the set-gid bits on at the
 same time.  If $File::chmod::DEBUG is true, the function will report an
-error.  If not, you are not carped of the conflict.  It is set to 1 as
+error.  If not, you are not warned of the conflict.  It is set to 1 as
 default.
 
 =item $File::chmod::MASK
@@ -471,6 +468,30 @@ found in $MASK.  It defaults to true.
 I<Note: this section was started with version 0.30.>
 
 This is an in-depth look at the changes being made from version to version.
+
+=head2 0.30 to 0.31
+
+=over 4
+
+=item B<fixed getsymchmod() bug>
+
+Whoa.  getsymchmod() was doing some crazy ish.  That's about all I can say.
+I did a great deal of debugging, and fixed it up.  It ALL had to do with two
+things:
+
+  $or = (/+=/ ? 1 : 0); # should have been /[+=]/
+
+  /u/ && $ok ? u_or() : u_not(); # should have been /u/ and $ok
+
+=item B<fixed getmod() bug>
+
+I was using map() incorrectly in getmod().  Fixed that.
+
+=item B<condensed lschmod()>
+
+I shorted it up, getting rid a variable.
+
+=back
 
 =head2 0.21 to 0.30
 
@@ -496,7 +517,7 @@ and g_not().  I don't know WHY the others had 'not' or 'or' in the front.
 
 =item B<fixed debugging bugs>
 
-Certain calls to carp() were not guarded by the $DEBUG variable, and now they
+Certain calls to warn() were not guarded by the $DEBUG variable, and now they
 are.  Also, for some reason, I left a debugging check (that didn't check to
 see if $DEBUG was true) in getsymchmod(), line 118.  It printed "ENTERING /g/".
 It's gone now.
@@ -508,7 +529,7 @@ went along broken:
 
   # or_s sub, File/chmod.pm, v0.21, line 330
   ($VAL & 00100) && do {
-    $DEBUG && carp("execute bit must be on for set-uid"); 1;
+    $DEBUG && warn("execute bit must be on for set-uid"); 1;
   } && next;
 
 Aside from me using '&&' more than enough (changed in the new code), this is
