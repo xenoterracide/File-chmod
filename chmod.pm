@@ -4,154 +4,111 @@ use Carp;
 use strict;
 use vars qw(
 	$VERSION @ISA @EXPORT @EXPORT_OK $DEBUG
-	$VAL $S $U $G $O $MODE $c
+	$UMASK $MASK $VAL $W $MODE
 );
 
 require Exporter;
 
-@ISA = qw( Exporter AutoLoader );
+@ISA = qw( Exporter );
 @EXPORT = qw( chmod getchmod );
 @EXPORT_OK = qw( symchmod lschmod getsymchmod getlschmod getmod );
 
-$VERSION = '0.21';
+$VERSION = '0.30';
 $DEBUG = 1;
-
-my %r = ('or' => [0,0400,0040,0004], 'full' => [0,0700,0070,0007]);
-my %w = ('or' => [0,0200,0020,0002], 'full' => $r{'full'});
-my %x = ('or' => [0,0100,0010,0001], 'full' => $r{'full'});
-
+$UMASK = 1;
+$MASK = umask;
 
 my ($SYM,$LS) = (1,2);
+my %ERROR = (
+	EDETMOD => "use of determine_mode is deprecated",
+	ENEXLOC => "cannot set group execute on locked file",
+	ENLOCEX => "cannot set file locking on group executable file",
+	ENSGLOC => "cannot set-gid on locked file",
+	ENLOCSG => "cannot set file locking on set-gid file",
+	ENEXUID => "execute bit must be on for set-uid",
+	ENEXGID => "execute bit must be on for set-gid",
+	ENULSID => "set-id has no effect for 'others'",
+	ENULSBG => "sticky bit has no effect for 'group'",
+	ENULSBO => "sticky bit has no effect for 'others'",
+);
 
 
 sub getmod {
-	my @files = @_;
-	my @return;
-
-	for (@files){
-		my $fm = (stat)[2] & 07777;
-		my $s = ($fm & 07000)>>9;
-		my ($u,$g,$o) = (($fm & 0700)>>6, ($fm & 0070)>>3, $fm & 0007);
-		push @return, oct($s.$u.$g.$o);
-	}
-
+	my @return = map (stat)[2] & 07777, @_;
 	return wantarray ? @return : $return[0];
 }
 
 
 sub chmod {
 	my $mode = shift;
-	my $how = determine_mode($mode);
-	my @files = @_;
+	my $how = mode($mode);
 
-	return symchmod($mode,@files) if $how == $SYM;
-	return lschmod($mode,@files) if $how == $LS;
-
-	return CORE::chmod($mode, @files);
+	return symchmod($mode,@_) if $how == $SYM;
+	return lschmod($mode,@_) if $how == $LS;
+	return CORE::chmod($mode,@_);
 }
+
 
 sub getchmod {
 	my $mode = shift;
-	my $how = determine_mode($mode);
-	my @files = @_;
+	my $how = mode($mode);
 
-	return getsymchmod($mode,@files) if $how == $SYM;
-	return getlschmod($mode,@files) if $how == $LS;
-
-	return wantarray ? (($mode) x @files) : $mode;
+	return getsymchmod($mode,@_) if $how == $SYM;
+	return getlschmod($mode,@_) if $how == $LS;
+	return wantarray ? (($mode) x @_) : $mode;
 }
 
 
 sub symchmod {
 	my $mode = shift;
-	my @files = @_;
-	my @return;
-	my $ret = 1;
-
-	@return = getsymchmod($mode,@files);
-	for (@files){ $ret &= CORE::chmod(shift(@return),$_); }
-	return $ret;
+	my @return = getsymchmod($mode,@_);
+	return scalar grep CORE::chmod(shift(@return),$_), @_;
 }
+
 
 sub getsymchmod {
 	my $mode = shift;
-	my @files = @_;
 	my @return;
 
-	(determine_mode($mode) != $SYM) && do {
-		carp "symchmod received non-symbolic mode: $mode";
-		return 0;
-	};
+	croak "symchmod received non-symbolic mode: $mode" if mode($mode) != $SYM;
 
-	for (@files){
-		$VAL = getmod($_);
+	for (@_){
+		local $VAL = getmod($_);
 
-		for my $thismode (split /,/, $mode){
-			local ($U,$G,$O,$MODE,$c);
+		for my $this (split /,/, $mode){
+			local $W = 0;
+			my $or;
 
-			CHAR: for $c (split //, $thismode){
-				for ($c){
-					next if $MODE;
-					/a/ && ($U=1,$G=2,$O=3) && next CHAR;
-					/u/ && ($U=1) && next CHAR;
-					/g/ && ($G=2) && next CHAR;
-					/o/ && ($O=3) && next CHAR;
+			for (split //, $this){
+				if (not defined $or and /[augo]/){
+					/a/ and $W |= 7, next;
+					/u/ and $W |= 1, next;
+					/g/ and $W |= 2, next;
+					/o/ and $W |= 4, next;
 				}
 
-				for ($c){
-					/[-+=]/ && do {
-						unless ($U || $G || $O){ ($U=1,$G=2,$O=3); }
-						$MODE = $_;
-						clear() if $_ eq "=";
-						next CHAR;
-					}
+				if (/[-+=]/){
+					$W ||= 7;
+					$or = (/=+/ ? 1 : 0);
+					clear() if /=/;
+					next;
 				}
 
-				croak "Bad mode $thismode" if !$MODE;
+				croak "Bad mode $this" if not defined $or;
+				croak "Unknown mode: $mode" if !/[ugorwxslt]/;
 
-				for ($c){
-					if (/u/){
-						u_or() if $MODE eq "+" or $MODE eq "=";
-						u_not() if $MODE eq "-";
-					}
-					if (/g/){
-						print "ENTERING /g/\n";
-						g_or() if $MODE eq "+" or $MODE eq "=";
-						g_not() if $MODE eq "-";
-					}
-					if (/o/){
-						o_or() if $MODE eq "+" or $MODE eq "=";
-						o_not() if $MODE eq "-";
-					}
-					if (/r/){
-						r_or() if $MODE eq "+" or $MODE eq "=";
-						r_not() if $MODE eq "-";
-					}
-					if (/w/){
-						w_or() if $MODE eq "+" or $MODE eq "=";
-						w_not() if $MODE eq "-";
-					}
-					if (/x/){
-						x_or() if $MODE eq "+" or $MODE eq "=";
-						x_not() if $MODE eq "-";
-					}
-					if (/s/){
-						or_s() if $MODE eq "+" or $MODE eq "=";
-						not_s() if $MODE eq "-";
-					}
-					if (/l/){
-						or_l() if $MODE eq "+" or $MODE eq "=";
-						not_l() if $MODE eq "-";
-					}
-					if (/t/){
-						or_t() if $MODE eq "+" or $MODE eq "=";
-						not_t() if $MODE eq "-";
-					}
-				}
-
-				croak "Unknown mode: $mode";
+				/u/ && $or ? u_or() : u_not();
+				/g/ && $or ? g_or() : g_not();
+				/o/ && $or ? o_or() : o_not();
+				/r/ && $or ? r_or() : r_not();
+				/w/ && $or ? w_or() : w_not();
+				/x/ && $or ? x_or() : x_not();
+				/s/ && $or ? s_or() : s_not();
+				/l/ && $or ? l_or() : l_not();
+				/t/ && $or ? t_or() : t_not();
 			}
 		}
+		$VAL &= ~$MASK if $UMASK;
 		push @return, $VAL;
 	}
 	return wantarray ? @return : $return[0];
@@ -160,223 +117,200 @@ sub getsymchmod {
 
 sub lschmod {
 	my $mode = shift;
-	my @files = @_;
 
 	local $VAL;
 
-	$VAL = getlschmod($mode,@files);
+	$VAL = getlschmod($mode,@_);
 
-	return CORE::chmod($VAL,@files);
+	return CORE::chmod($VAL,@_);
 }
+
 
 sub getlschmod {
 	my $mode = shift;
-	my @files = @_;
+	my $VAL = 0;
 
-	((determine_mode($mode) != $LS) || length($mode) != 10) && do {
-		carp "lschmod received non-ls mode: $mode";
-		return 0;
-	};
+	croak "lschmod received non-ls mode: $mode" if mode($mode) != $LS;
 
-	local $VAL;
+	my ($u,$g,$o) = ($mode =~ /^.(...)(...)(...)$/);
 
-	my ($u,$g,$o) = ($mode =~ /^.(...)(...)(...)$/) || do {
-		carp "lschmod received non-ls mode: $mode";
-		return 0;
-	};
-
-	for (split //, $u){
+	for ($u){
 		$VAL |= 0400 if /r/;
 		$VAL |= 0200 if /w/;
 		$VAL |= 0100 if /[xs]/;
 		$VAL |= 04000 if /[sS]/;
 	}
 
-	for (split //, $g){
+	for ($g){
 		$VAL |= 0040 if /r/;
 		$VAL |= 0020 if /w/;
 		$VAL |= 0010 if /[xs]/;
 		$VAL |= 02000 if /[sS]/;
 	}
 
-	for (split //, $o){
+	for ($o){
 		$VAL |= 0004 if /r/;
 		$VAL |= 0002 if /w/;
 		$VAL |= 0001 if /[xt]/;
 		$VAL |= 01000 if /[Tt]/;
 	}
 
-	return wantarray ? (($VAL) x @files) : $VAL;
+	return wantarray ? (($VAL) x @_) : $VAL;
 }
 
 
-sub determine_mode {
+sub mode {
 	my $mode = shift;
 	return 0 if $mode !~ /\D/;
 	return $SYM if $mode =~ /[augo=+,]/;
-	return $LS if $mode =~ /ST/;
 	return $LS if $mode =~ /^.([r-][w-][xSs-]){2}[r-][w-][xTt-]$/;
 	return $SYM;
 }
 
 
+sub determine_mode {
+	carp $ERROR{EDECMOD};
+	mode(@_);
+}
+
+
 sub clear {
-	$U && ($VAL &= 02077);
-	$G && ($VAL &= 05707);
-	$O && ($VAL &= 07770);
+	$W & 1 and $VAL &= 02077;
+	$W & 2 and $VAL &= 05707;
+	$W & 4 and $VAL &= 07770;
 }
 	
 
 sub u_or {
 	my $val = $VAL;
-	$G && ($VAL |= (($val & 0700)>>3 | ($val & 04000)>>1));
-	$O && ($VAL |= (($val & 0700)>>6));
-	next CHAR;
+	$W & 2 and ($VAL |= (($val & 0700)>>3 | ($val & 04000)>>1));
+	$W & 4 and ($VAL |= (($val & 0700)>>6));
 }
+
 
 sub u_not {
 	my $val = $VAL;
-	$U && ($VAL &= ~(($val & 0700) | ($val & 05000)));
-	$G && ($VAL &= ~(($val & 0700)>>3 | ($val & 04000)>>1));
-	$O && ($VAL &= ~(($val & 0700)>>6));
-	next CHAR;
+	$W & 1 and $VAL &= ~(($val & 0700) | ($val & 05000));
+	$W & 2 and $VAL &= ~(($val & 0700)>>3 | ($val & 04000)>>1);
+	$W & 4 and $VAL &= ~(($val & 0700)>>6);
 }
 
 
 sub g_or {
 	my $val = $VAL;
-	$U && ($VAL |= (($val & 070)<<3 | ($val & 02000)<<1));
-	$O && ($VAL |= (($val & 070)>>3));
-	next CHAR;
+	$W & 1 and $VAL |= (($val & 070)<<3 | ($val & 02000)<<1);
+	$W & 4 and $VAL |= ($val & 070)>>3;
 }
+
 
 sub g_not {
 	my $val = $VAL;
-	$U && ($VAL &= ~(($val & 070)<<3 | ($val & 02000)<<1));
-	$G && ($VAL &= ~(($val & 070) | ($val & 02000)));
-	$O && ($VAL &= ~(($val & 070)>>3));
-	next CHAR;
+	$W & 1 and $VAL &= ~(($val & 070)<<3 | ($val & 02000)<<1);
+	$W & 2 and $VAL &= ~(($val & 070) | ($val & 02000));
+	$W & 4 and $VAL &= ~(($val & 070)>>3);
 }
 
 
 sub o_or {
 	my $val = $VAL;
-	$U && ($VAL |= (($val & 07)<<6));
-	$G && ($VAL |= (($val & 07)<<3));
-	next CHAR;
+	$W & 1 and $VAL |= (($val & 07)<<6);
+	$W & 2 and $VAL |= (($val & 07)<<3);
 }
+
 
 sub o_not {
 	my $val = $VAL;
-	$U && ($VAL &= ~(($val & 07)<<6));
-	$G && ($VAL &= ~(($val & 07)<<3));
-	$O && ($VAL &= ~(($val & 07)));
-	next CHAR;
+	$W & 1 and $VAL &= ~(($val & 07)<<6);
+	$W & 2 and $VAL &= ~(($val & 07)<<3);
+	$W & 4 and $VAL &= ~($val & 07);
 }
 
 
 sub r_or {
-	$U && ($VAL |= $r{'or'}[$U]);
-	$G && ($VAL |= $r{'or'}[$G]);
-	$O && ($VAL |= $r{'or'}[$O]);
-	next CHAR;
+	$W & 1 and $VAL |= 0400;
+	$W & 2 and $VAL |= 0040;
+	$W & 3 and $VAL |= 0004;
 }
 
+
 sub r_not {
-	$U && ($VAL &= ~$r{'or'}[$U]);
-	$G && ($VAL &= ~$r{'or'}[$G]);
-	$O && ($VAL &= ~$r{'or'}[$O]);
-	next CHAR;
+	$W & 1 and $VAL &= ~0400;
+	$W & 2 and $VAL &= ~0040;
+	$W & 3 and $VAL &= ~0004;
 }
 
 
 sub w_or {
-	$U && ($VAL |= $w{'or'}[$U]);
-	$G && ($VAL |= $w{'or'}[$G]);
-	$O && ($VAL |= $w{'or'}[$O]);
-	next CHAR;
+	$W & 1 and $VAL |= 0200;
+	$W & 2 and $VAL |= 0020;
+	$W & 3 and $VAL |= 0002;
 }
 
+
 sub w_not {
-	$U && ($VAL &= ~$w{'or'}[$U]);
-	$G && ($VAL &= ~$w{'or'}[$G]);
-	$O && ($VAL &= ~$w{'or'}[$O]);
-	next CHAR;
+	$W & 1 and $VAL &= ~0200;
+	$W & 2 and $VAL &= ~0020;
+	$W & 3 and $VAL &= ~0002;
 }
 
 
 sub x_or {
-	($VAL & 02000) && do {
-		$DEBUG && carp("cannot set execute on locked file"); 1;
-	} && next;
-	$U && ($VAL |= $x{'or'}[$U]);
-	$G && ($VAL |= $x{'or'}[$G]);
-	$O && ($VAL |= $x{'or'}[$O]);
-	next CHAR;
+	if ($VAL & 02000){ $DEBUG and carp($ERROR{ENEXLOC}), return }
+	$W & 1 and $VAL |= 0100;
+	$W & 2 and $VAL |= 0010;
+	$W & 4 and $VAL |= 0001;
 }
+
 
 sub x_not {
-	$U && ($VAL &= ~$x{'or'}[$U]);
-	$G && ($VAL &= ~$x{'or'}[$G]);
-	$O && ($VAL &= ~$x{'or'}[$O]);
-	next CHAR;
+	$W & 1 and $VAL &= ~0100;
+	$W & 2 and $VAL &= ~0010;
+	$W & 4 and $VAL &= ~0001;
 }
 
 
-sub or_s {
-	($VAL & 02000) && do {
-		$DEBUG && carp("cannot set-gid on locked file"); 1;
-	} && next;
-	($VAL & 00100) && do {
-		$DEBUG && carp("execute bit must be on for set-uid"); 1;
-	} && next;
-	($VAL & 00010) && do {
-		$DEBUG && carp("execute bit must be on for set-gid"); 1;
-	} && next;
-	$U && ($VAL |= 04000);
-	$G && ($VAL |= 02000);
-	$O && (carp "set-id has no effect for 'others'");
-	next CHAR;
-}
-
-sub not_s {
-	$U && ($VAL &= ~04000);
-	$G && ($VAL &= ~02000);
-	$O && (carp "set-id has no effect for 'others'");
-	next CHAR;
+sub s_or {
+	if ($VAL & 02000){ $DEBUG and carp($ERROR{ENSGLOC}), return }
+	if (not $VAL & 00100){ $DEBUG and carp($ERROR{ENEXUID}), return }
+	if (not $VAL & 00010){ $DEBUG and carp($ERROR{ENEXGID}), return }
+	$W & 1 and $VAL |= 04000;
+	$W & 2 and $VAL |= 02000;
+	$W & 4 and $DEBUG and carp $ERROR{ENULSID};
 }
 
 
-sub or_l {
-	($VAL & 00010) && do {
-		$DEBUG && carp("cannot cause file locking on group executable file"); 1;
-	} && next;
-	($VAL & 02010) && do {
-		$DEBUG && carp("cannot cause file locking on set-gid file"); 1;
-	} && next;
-	($U || $G || $O) && ($VAL |= 02000);
-	next CHAR;
-}
-
-sub not_l {
-	($U || $G || $O) && ($VAL &= ~02000);
-	next CHAR;
+sub s_not {
+	$W & 1 and $VAL &= ~04000;
+	$W & 2 and $VAL &= ~02000;
+	$W & 4 and $DEBUG and carp $ERROR{ENULSID};
 }
 
 
-sub or_t {
-	$U && ($VAL |= 01000);
-	$G && $DEBUG && (carp "sticky bit has no effect for 'group'");
-	$O && $DEBUG && (carp "sticky bit has no effect for 'others'");
-	next CHAR;
+sub l_or {
+	if ($VAL & 02010){ $DEBUG and carp($ERROR{ENLOCSG}), return }
+	if ($VAL & 00010){ $DEBUG and carp($ERROR{ENLOCEX}), return }
+	$VAL |= 02000;
 }
 
-sub not_t {
-	$U && ($VAL &= ~01000);
-	$G && $DEBUG && (carp "sticky bit has no effect for 'group'");
-	$O && $DEBUG && (carp "sticky bit has no effect for 'others'");
-	next CHAR;
+
+sub l_not {
+	$VAL &= ~02000 if not $VAL & 00010;
 }
+
+
+sub t_or {
+	$W & 1 and $VAL |= 01000;
+	$W & 2 and $DEBUG and carp $ERROR{ENULSBG};
+	$W & 4 and $DEBUG and carp $ERROR{ENULSBO};
+}
+
+
+sub t_not {
+	$W & 1 and $VAL &= ~01000;
+	$W & 2 and $DEBUG and carp $ERROR{ENULSBG};
+	$W & 4 and $DEBUG and carp $ERROR{ENULSBO};
+}
+
 
 1;
 
@@ -384,7 +318,11 @@ __END__
 
 =head1 NAME
 
-File::chmod - Perl extension to implement symbolic and ls chmod modes
+File::chmod - Implements symbolic and ls chmod modes
+
+=head1 VERSION
+
+This is File::chmod v0.30.
 
 =head1 SYNOPSIS
 
@@ -418,6 +356,8 @@ mode and an "ls" mode.
 Symbolic modes are thoroughly described in your chmod(1) man page, but
 here are a few examples.
 
+  # NEW: if $UMASK is true, symchmod() applies a bit-mask found in $MASK
+
   chmod("+x","file1","file2");	# overloaded chmod(), that is...
   # turns on the execute bit for all users on those two files
 
@@ -444,6 +384,11 @@ regardless of what it had been before.  symchmod() is useful for allowing
 the modifying of a file's permissions without having to run a system call
 or determining the file's permissions, and then combining that with whatever
 bits are appropriate.  It also operates separately on each file.
+
+An added feature to version 0.30 is the $UMASK variable, explained below; if
+symchmod() is called and this variable is true, then the function uses the
+(also new) $MASK variable (which defaults to umask()) as a mask against the
+new mode.  This is documented below more clearly.
 
 =head2 Functions
 
@@ -501,28 +446,160 @@ Returns a list of the current mode of each file.
 
 =item $File::chmod::DEBUG
 
-If set to a true value, it will report carpings, similar to those
-produced by chmod() on your system.  Otherwise, the functions will not
-report errors.  Example: a file can not have file-locking and the
-set-gid bits on at the same time.  If $File::chmod::DEBUG is true, the
-function will silently report an error.  If not, you are not carped of
-the conflict.  It is set to 1 as default.
+If set to a true value, it will report carpings, similar to those produced
+by chmod() on your system.  Otherwise, the functions will not report errors.
+Example: a file can not have file-locking and the set-gid bits on at the
+same time.  If $File::chmod::DEBUG is true, the function will report an
+error.  If not, you are not carped of the conflict.  It is set to 1 as
+default.
 
-=head1 BUGS
+=item $File::chmod::MASK
 
-I'm still trying to come up with sure-fire ways to distinguish between an
-"ls" mode and a symbolic mode.  Let me know if you have a method for
-determining the mode.  I'm not sure mine is infallible.
+Contains the umask to apply to new file modes when using getsymchmod().  This
+defaults to the return value of umask() at compile time.  Is only applied if
+$UMASK is true.
+
+=item $File::chmod::UMASK
+
+This is a boolean which tells getsymchmod() whether or not to apply the umask
+found in $MASK.  It defaults to true.
+
+=back
+
+=head1 REVISIONS
+
+I<Note: this section was started with version 0.30.>
+
+This is an in-depth look at the changes being made from version to version.
+
+=head2 0.21 to 0.30
+
+=over 4
+
+=item B<added umask() honoring for symchmod()>
+
+The symchmod() function now honors the $UMASK and $MASK variables.  $UMASK is
+a boolean which indicates whether or not to honor the $MASK variable.  $MASK
+holds a umask, and it defaults to umask().  $UMASK defaults to true.  These
+variables are NOT exported.  They must explictly set (i.e. $File::chmod::UMASK
+= 0).
+
+=item B<function name changes>
+
+Renamed internal function determine_mode() to mode().  However, if you happen
+to be using determine_mode() somewhere, mode() will be called, but you'll also
+get a warning about deprecation.
+
+Renamed internal functions {or,not}_{l,s,t} to {l,s,t}_{or,not}.  This is to
+keep in standard with the OTHER 6 pairs of bitwise functions, such as r_or()
+and g_not().  I don't know WHY the others had 'not' or 'or' in the front.
+
+=item B<fixed debugging bugs>
+
+Certain calls to carp() were not guarded by the $DEBUG variable, and now they
+are.  Also, for some reason, I left a debugging check (that didn't check to
+see if $DEBUG was true) in getsymchmod(), line 118.  It printed "ENTERING /g/".
+It's gone now.
+
+=item B<fixed set-uid and set-gid bug>
+
+Heh, it seems that in the previous version of File::chmod, the following code
+went along broken:
+
+  # or_s sub, File/chmod.pm, v0.21, line 330
+  ($VAL & 00100) && do {
+    $DEBUG && carp("execute bit must be on for set-uid"); 1;
+  } && next;
+
+Aside from me using '&&' more than enough (changed in the new code), this is
+broken.  This is now fixed.
+
+=item B<fixed file lock/set-gid bug>
+
+The not_l() function (now renamed to l_not()) used to take the file mode and
+bit-wise NOT it with ~02000.  However, it did not check if the file was locked
+vs. set-gid.  Now, the function is C<$VAL &= ~02000 if not $VAL & 00010;>.
+
+=item B<removed useless data structures>
+
+I do not know why I had the $S variable, or %r, %w, and %x hashes.  In fact,
+$S was declared in C<use vars qw( ... );>, but never given a value, and the
+%r, %w, and %x hashes had a 'full' key which never got used.  And the hashes
+themselves weren't really needed anyway.  Here is a list of the variables no
+longer in use, and what they have been replaced with (if any):
+
+  $S		nothing
+  $U, $G, $O	$W
+  %r, %w, %x	octal numbers
+  @files	@_ (I had @files = @_; in nearly EVERY sub)
+  $c		$_
+
+=item B<compacted code>
+
+The first version of File::chmod that was published was 0.13, and it was
+written in approximately 10 days, being given the off-and-on treatment I end
+up having to give several projects, due to more pressing matters.  Well, since
+then, most of the code has stayed the same, although bugs were worked out.
+Well, I got rid of a lot of slow, clunky, and redundant sections of code in
+this version.  Sections include the processing of each character of the mode
+in getsymchmod(), the getmod() subroutine, um, nearly ALL of the getsymchmod()
+function, now that I look at it.
+
+Here's part of the getsymchmod() rewrite:
+
+  for ($c){
+    if (/u/){
+      u_or() if $MODE eq "+" or $MODE eq "=";
+      u_not() if $MODE eq "-";
+    }
+  ...
+  }
+
+  # changed to
+
+  /u/ && $or ? u_or() : u_and();
+  # note: operating on $_, $c isn't used anymore
+  # note: $or holds 1 if the $MODE was + or =, 0 if $MODE was -
+  # note: previous was redundant.  didn't need $MODE eq "-" check
+  #       because u_or() and u_not() both go to the next character
+
+=back
+
+=head1 PORTING
+
+This is only good on Unix-like boxes.  I would like people to help me work on
+File::chmod for any OS that deserves it.  If you would like to help, please
+email me (address below) with the OS and any information you might have on how
+chmod() should work on it; if you don't have any specific information, but
+would still like to help, hey, that's good too.  I have the following
+information (from L</perlport>):
+
+=over 4
+
+=item Win32
+
+Only good for changing "owner" read-write access, "group", and "other" bits
+are meaningless.  I<NOTE: Win32::File and Win32::FileSecurity already do
+this.  I do not currently see a need to port File::chmod.>
+
+=item MacOS
+
+Only limited meaning. Disabling/enabling write permission is mapped to
+locking/unlocking the file.
+
+=item RISC OS
+
+Only good for changing "owner" and "other" read-write access.
+
+=back
 
 =head1 AUTHOR
 
-  Jeff Pinyan
-  jeffp@crusoe.net
-  CPAN ID: PINYAN
+Jeff Pinyan, japhy+perl@pobox.com, CPAN ID: PINYAN
 
 =head1 SEE ALSO
 
-  Stat::lsMode (by Mark-James Dominus)
+  Stat::lsMode (by Mark-James Dominus, CPAN ID: MJD)
   chmod(1) manpage
   perldoc -f chmod
   perldoc -f stat

@@ -18,9 +18,12 @@ print "ok 1\n";
 # (correspondingly "not ok 13") depending on the success of chunk 13
 # of the test code):
 
-printf "chmod.pm: %05o\n", getmod("chmod.pm");
+printf "original state of chmod.pm: %05o\n", getmod("chmod.pm");
+
+print "calling: chmod('+x', 'chmod.pm')... ";
 chmod("+x","chmod.pm");
 printf "chmod.pm: %05o\n", getmod("chmod.pm");
+
+print "calling: chmod('-x', 'chmod.pm')... ";
 chmod("-x","chmod.pm");
 printf "chmod.pm: %05o\n", getmod("chmod.pm");
-

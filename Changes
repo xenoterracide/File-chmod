@@ -1,5 +1,18 @@
 Revision history for Perl extension File::chmod.
 
+0.30  Wed Jul 21 15:00:00 1999
+	- added umask() honoring for symchmod()
+	- function name changes
+	- fixed debugging bugs
+	- fixed set-uid and set-gid bug
+	- fixed file lock/set-gid bug
+	- removed useless data structures
+	- compacted code
+	- see the new REVISIONS section in the docs for explanations
+
+0.22  Sat Apr 24 11:08:27 1999
+	- refixed the untarring error (now it works nicely)
+
 0.20  Sat Apr  3 16:24:14 1999
 	- fixed the untarring error (didn't appear in a directory)
 
