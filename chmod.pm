@@ -13,7 +13,7 @@ require Exporter;
 @EXPORT = qw( chmod getchmod );
 @EXPORT_OK = qw( symchmod lschmod getsymchmod getlschmod getmod );
 
-$VERSION = '0.12';
+$VERSION = '0.13';
 $DEBUG = 1;
 
 my %r = ('or' => [0,0400,0040,0004], 'full' => [0,0700,0070,0007]);
@@ -79,7 +79,7 @@ sub getsymchmod {
 	my @return;
 
 	(determine_mode($mode) != $SYM) && do {
-		warn "symchmod received non-symbolic mode: $mode";
+		carp "symchmod received non-symbolic mode: $mode";
 		return 0;
 	};
 
@@ -107,7 +107,7 @@ sub getsymchmod {
 					}
 				}
 
-				die "Bad mode $thismode" if !$MODE;
+				croak "Bad mode $thismode" if !$MODE;
 
 				for ($c){
 					if (/u/){
@@ -148,6 +148,8 @@ sub getsymchmod {
 						not_t() if $MODE eq "-";
 					}
 				}
+
+				croak "Unknown mode: $mode";
 			}
 		}
 		push @return, $VAL;
@@ -171,15 +173,15 @@ sub getlschmod {
 	my $mode = shift;
 	my @files = @_;
 
-	(determine_mode($mode) != $LS) && do {
-		warn "lschmod received non-ls mode: $mode";
+	((determine_mode($mode) != $LS) || length($mode) != 10) && do {
+		carp "lschmod received non-ls mode: $mode";
 		return 0;
 	};
 
 	local $VAL;
 
 	my ($u,$g,$o) = ($mode =~ /^.(...)(...)(...)$/) || do {
-		warn "lschmod received non-ls mode: $mode";
+		carp "lschmod received non-ls mode: $mode";
 		return 0;
 	};
 
@@ -305,7 +307,7 @@ sub w_not {
 
 sub x_or {
 	($VAL & 02000) && do {
-		$DEBUG && warn("cannot set execute on locked file"); 1;
+		$DEBUG && carp("cannot set execute on locked file"); 1;
 	} && next;
 	$U && ($VAL |= $x{'or'}[$U]);
 	$G && ($VAL |= $x{'or'}[$G]);
@@ -323,34 +325,34 @@ sub x_not {
 
 sub or_s {
 	($VAL & 02000) && do {
-		$DEBUG && warn("cannot set-gid on locked file"); 1;
+		$DEBUG && carp("cannot set-gid on locked file"); 1;
 	} && next;
 	($VAL & 00100) && do {
-		$DEBUG && warn("execute bit must be on for set-uid"); 1;
+		$DEBUG && carp("execute bit must be on for set-uid"); 1;
 	} && next;
 	($VAL & 00010) && do {
-		$DEBUG && warn("execute bit must be on for set-gid"); 1;
+		$DEBUG && carp("execute bit must be on for set-gid"); 1;
 	} && next;
 	$U && ($VAL |= 04000);
 	$G && ($VAL |= 02000);
-	$O && (warn "set-id has no effect for 'others'");
+	$O && (carp "set-id has no effect for 'others'");
 	next CHAR;
 }
 
 sub not_s {
 	$U && ($VAL &= ~04000);
 	$G && ($VAL &= ~02000);
-	$O && (warn "set-id has no effect for 'others'");
+	$O && (carp "set-id has no effect for 'others'");
 	next CHAR;
 }
 
 
 sub or_l {
 	($VAL & 00010) && do {
-		$DEBUG && warn("cannot cause file locking on group executable file"); 1;
+		$DEBUG && carp("cannot cause file locking on group executable file"); 1;
 	} && next;
 	($VAL & 02010) && do {
-		$DEBUG && warn("cannot cause file locking on set-gid file"); 1;
+		$DEBUG && carp("cannot cause file locking on set-gid file"); 1;
 	} && next;
 	($U || $G || $O) && ($VAL |= 02000);
 	next CHAR;
@@ -364,15 +366,15 @@ sub not_l {
 
 sub or_t {
 	$U && ($VAL |= 01000);
-	$G && $DEBUG && (warn "sticky bit has no effect for 'group'");
-	$O && $DEBUG && (warn "sticky bit has no effect for 'others'");
+	$G && $DEBUG && (carp "sticky bit has no effect for 'group'");
+	$O && $DEBUG && (carp "sticky bit has no effect for 'others'");
 	next CHAR;
 }
 
 sub not_t {
 	$U && ($VAL &= ~01000);
-	$G && $DEBUG && (warn "sticky bit has no effect for 'group'");
-	$O && $DEBUG && (warn "sticky bit has no effect for 'others'");
+	$G && $DEBUG && (carp "sticky bit has no effect for 'group'");
+	$O && $DEBUG && (carp "sticky bit has no effect for 'others'");
 	next CHAR;
 }
 
@@ -499,11 +501,11 @@ Returns a list of the current mode of each file.
 
 =item $File::chmod::DEBUG
 
-If set to a true value, it will report warnings, similar to those produced
+If set to a true value, it will report carpings, similar to those produced
 by chmod() on your system.  Otherwise, the functions will not report errors.
 Example: a file can not have file-locking and the set-gid bits on at the
 same time.  If $File::chmod::DEBUG is true, the function will report an
-error.  If not, you are not warned of the conflict.  It is set to 1 as
+error.  If not, you are not carped of the conflict.  It is set to 1 as
 default.
 
 =head1 BUGS
