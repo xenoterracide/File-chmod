@@ -1,0 +1,125 @@
+This module allows for a user to chmod files using octal mode
+(0755), symbolic mode ("=rwx,og-w"), or ls-mode ("-rwxr-xr-x").
+
+
+NAME
+    File::chmod - Perl extension to implement symbolic and ls chmod modes
+
+SYNOPSIS
+      use File::chmod;
+
+      # chmod takes all three types
+      # these all do the same thing
+      chmod(0666,@files);
+      chmod("=rw",@files);
+      chmod("-rw-rw-rw-",@files);
+
+      # or
+
+      use File::chmod qw( symchmod lschmod );
+
+      chmod(0666,@files);           # this is the normal chmod
+      symchmod("=rw",@files);       # takes symbolic modes only
+      lschmod("-rw-rw-rw-",@files); # takes "ls" modes only
+
+      # more functions, read on to understand
+
+DESCRIPTION
+    File::chmod is a utility that allows you to bypass system calls or bit
+    processing of a file's permissions. It overloads the chmod() function
+    with its own that gets an octal mode, a symbolic mode (see below), or an
+    "ls" mode (see below). If you wish not to overload chmod(), you can
+    export symchmod() and lschmod(), which take, respectively, a symbolic
+    mode and an "ls" mode.
+
+    Symbolic modes are thoroughly described in your chmod(1) man page, but
+    here are a few examples.
+
+      chmod("+x","file1","file2");  # overloaded chmod(), that is...
+      # turns on the execute bit for all users on those two files
+
+      chmod("o=,g-w","file1","file2");
+      # removes 'other' permissions, and the write bit for 'group'
+
+      chmod("=u","file1","file2");
+      # sets all bits to those in 'user'
+
+    "ls" modes are the type produced on the left-hand side of an `ls -l' on
+    a directory. Examples are:
+
+      chmod("-rwxr-xr-x","file1","file2");
+      # the 0755 setting; user has read-write-execute, group and others
+      # have read-execute priveleges
+
+      chmod("-rwsrws---","file1","file2");
+      # sets read-write-execute for user and group, none for others
+      # also sets set-uid and set-gid bits
+
+    The regular chmod() and lschmod() are absolute; that is, they are not
+    appending to or subtracting from the current file mode. They set it,
+    regardless of what it had been before. symchmod() is useful for allowing
+    the modifying of a file's permissions without having to run a system
+    call or determining the file's permissions, and then combining that with
+    whatever bits are appropriate. It also operates separately on each file.
+
+  Functions
+
+    Exported by default:
+
+    chmod(MODE,FILES)
+        Takes an octal, symbolic, or "ls" mode, and then chmods each file
+        appropriately.
+
+    getchmod(MODE,FILES)
+        Returns a list of modified permissions, without chmodding files.
+        Accepts any of the three kinds of modes.
+
+          @newmodes = getchmod("+x","file1","file2");
+          # @newmodes holds the octal permissons of the files'
+          # modes, if they were to be sent through chmod("+x"...)
+
+    Exported by request:
+
+    symchmod(MODE,FILES)
+        Takes a symbolic permissions mode, and chmods each file.
+
+    lschmod(MODE,FILES)
+        Takes an "ls" permissions mode, and chmods each file.
+
+    getsymchmod(MODE,FILES)
+        Returns a list of modified permissions, without chmodding files.
+        Accepts only symbolic permisson modes.
+
+    getlschmod(MODE,FILES)
+        Returns a list of modified permissions, without chmodding files.
+        Accepts only "ls" permisson modes.
+
+    getmod(FILES)
+        Returns a list of the current mode of each file.
+
+  Variables
+
+    $File::chmod::DEBUG
+        If set to a true value, it will report warnings, similar to those
+        produced by chmod() on your system. Otherwise, the functions will
+        not report errors. Example: a file can not have file-locking and the
+        set-gid bits on at the same time. If $File::chmod::DEBUG is true,
+        the function will report an error. If not, you are not warned of the
+        conflict. It is set to 1 as default.
+
+BUGS
+        I'm still trying to come up with sure-fire ways to distinguish
+        between an "ls" mode and a symbolic mode. Let me know if you have a
+        method for determining the mode. I'm not sure mine is infallible.
+
+AUTHOR
+          Jeff Pinyan
+          jeffp@crusoe.net
+          CPAN ID: PINYAN
+
+SEE ALSO
+          Stat::lsMode (by Mark-James Dominus)
+          chmod(1) manpage
+          perldoc -f chmod
+          perldoc -f stat
+
