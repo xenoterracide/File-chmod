@@ -1,5 +1,7 @@
 Changes
+INSTALL
 MANIFEST
 Makefile.PL
+README
 chmod.pm
 test.pl

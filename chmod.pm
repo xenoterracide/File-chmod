@@ -13,7 +13,7 @@ require Exporter;
 @EXPORT = qw( chmod getchmod );
 @EXPORT_OK = qw( symchmod lschmod getsymchmod getlschmod getmod );
 
-$VERSION = '0.2';
+$VERSION = '0.21';
 $DEBUG = 1;
 
 my %r = ('or' => [0,0400,0040,0004], 'full' => [0,0700,0070,0007]);
@@ -501,12 +501,12 @@ Returns a list of the current mode of each file.
 
 =item $File::chmod::DEBUG
 
-If set to a true value, it will report carpings, similar to those produced
-by chmod() on your system.  Otherwise, the functions will not report errors.
-Example: a file can not have file-locking and the set-gid bits on at the
-same time.  If $File::chmod::DEBUG is true, the function will report an
-error.  If not, you are not carped of the conflict.  It is set to 1 as
-default.
+If set to a true value, it will report carpings, similar to those
+produced by chmod() on your system.  Otherwise, the functions will not
+report errors.  Example: a file can not have file-locking and the
+set-gid bits on at the same time.  If $File::chmod::DEBUG is true, the
+function will silently report an error.  If not, you are not carped of
+the conflict.  It is set to 1 as default.
 
 =head1 BUGS
 
