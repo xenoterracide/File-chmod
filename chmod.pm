@@ -13,7 +13,7 @@ require Exporter;
 @EXPORT = qw( chmod getchmod );
 @EXPORT_OK = qw( symchmod lschmod getsymchmod getlschmod getmod );
 
-$VERSION = '0.13';
+$VERSION = '0.2';
 $DEBUG = 1;
 
 my %r = ('or' => [0,0400,0040,0004], 'full' => [0,0700,0070,0007]);
