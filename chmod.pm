@@ -13,7 +13,7 @@ require Exporter;
 @EXPORT = qw( chmod getchmod );
 @EXPORT_OK = qw( symchmod lschmod getsymchmod getlschmod getmod );
 
-$VERSION = '0.11';
+$VERSION = '0.12';
 $DEBUG = 1;
 
 my %r = ('or' => [0,0400,0040,0004], 'full' => [0,0700,0070,0007]);
@@ -213,7 +213,7 @@ sub determine_mode {
 	return 0 if $mode !~ /\D/;
 	return $SYM if $mode =~ /[augo=+,]/;
 	return $LS if $mode =~ /ST/;
-	return $LS if length($mode) == 10;
+	return $LS if $mode =~ /^.([r-][w-][xSs-]){2}[r-][w-][xTt-]$/;
 	return $SYM;
 }
 

@@ -1,5 +1,13 @@
 Revision history for Perl extension File::chmod.
 
+0.12  Sat Feb 13 09:24:56 1999
+	- fixed determine_mode() method for determining mode
+
+0.11  Fri Feb 12 20:21:37 1999
+	- fixed determine_mode() bug
+
+0.10  Fri Feb 12 19:15:04 1999
+	- changed @EXPORT and @EXPORT_OK functions
+
 0.01  Sat Feb  6 17:36:42 1999
 	- original version; created by h2xs 1.18
-
