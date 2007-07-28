@@ -1,6 +1,6 @@
 Changes
 MANIFEST
 Makefile.PL
-README
 chmod.pm
 test.pl
+META.yml                                 Module meta-data (added by MakeMaker)
