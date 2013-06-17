@@ -3,7 +3,7 @@ package File::chmod;
 use Carp;
 use strict;
 use vars qw(
-  $VERSION @ISA @EXPORT @EXPORT_OK $DEBUG
+   @ISA @EXPORT @EXPORT_OK $DEBUG
   $UMASK $MASK $VAL $W $MODE
 );
 
@@ -13,7 +13,8 @@ require Exporter;
 @EXPORT = qw( chmod getchmod );
 @EXPORT_OK = qw( symchmod lschmod getsymchmod getlschmod getmod );
 
-$VERSION = '0.32';
+# VERSION
+
 $DEBUG = 1;
 $UMASK = 1;
 $MASK = umask;
@@ -176,7 +177,7 @@ sub clear {
   $W & 2 and $VAL &= 05707;
   $W & 4 and $VAL &= 07770;
 }
-  
+
 
 sub u_or {
   my $val = $VAL;
@@ -310,16 +311,7 @@ sub t_not {
 
 
 1;
-
-__END__
-
-=head1 NAME
-
-File::chmod - Implements symbolic and ls chmod modes
-
-=head1 VERSION
-
-This is File::chmod v0.32.
+# ABSTRACT: Implements symbolic and ls chmod modes
 
 =head1 SYNOPSIS
 
@@ -625,23 +617,9 @@ Only good for changing "owner" and "other" read-write access.
 
 =back
 
-=head1 AUTHOR
-
-Jeff C<japhy> Pinyan, F<japhy.734+CPAN@gmail.com>, CPAN ID: PINYAN
-
 =head1 SEE ALSO
 
   Stat::lsMode (by Mark-James Dominus, CPAN ID: MJD)
   chmod(1) manpage
   perldoc -f chmod
   perldoc -f stat
-
-=head1 COPYRIGHT AND LICENCE
-
-Copyright (C) 2007 by Jeff Pinyan
-
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself, either Perl version 5.8.8 or,
-at your option, any later version of Perl 5 you may have available.
-
-=cut

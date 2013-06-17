@@ -1,0 +1,4 @@
+theme    = core
+severity = 5
+verbose  = 9
+exclude  = ProhibitLeadingZeros
