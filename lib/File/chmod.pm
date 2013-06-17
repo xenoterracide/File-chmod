@@ -1,17 +1,13 @@
 package File::chmod;
-
-use Carp;
 use strict;
-use vars qw(
-   @ISA @EXPORT @EXPORT_OK $DEBUG
-  $UMASK $MASK $VAL $W $MODE
-);
+use warnings;
+use Carp;
+use vars qw( $DEBUG $UMASK $MASK $VAL $W $MODE );
 
-require Exporter;
+use base 'Exporter';
 
-@ISA = qw( Exporter );
-@EXPORT = qw( chmod getchmod );
-@EXPORT_OK = qw( symchmod lschmod getsymchmod getlschmod getmod );
+our @EXPORT    = (qw( chmod getchmod ));
+our @EXPORT_OK = (qw( symchmod lschmod getsymchmod getlschmod getmod ));
 
 # VERSION
 
