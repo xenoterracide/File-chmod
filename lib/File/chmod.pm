@@ -2,18 +2,19 @@ package File::chmod;
 use strict;
 use warnings;
 use Carp;
-use vars qw( $DEBUG $UMASK $MASK $VAL $W $MODE );
+use vars qw( $VAL $W $MODE );
 
 use base 'Exporter';
+
+# VERSION
 
 our @EXPORT    = (qw( chmod getchmod ));
 our @EXPORT_OK = (qw( symchmod lschmod getsymchmod getlschmod getmod ));
 
-# VERSION
+our $DEBUG     = 1;
+our $UMASK     = 2;
+our $MASK      = umask;
 
-$DEBUG = 1;
-$UMASK = 1;
-$MASK = umask;
 
 my ($SYM,$LS) = (1,2);
 my %ERROR = (
@@ -28,7 +29,6 @@ my %ERROR = (
   ENULSBG => "sticky bit has no effect for 'group'",
   ENULSBO => "sticky bit has no effect for 'others'",
 );
-
 
 sub getmod {
   my @return = map { (stat)[2] & 07777 } @_;
@@ -58,6 +58,14 @@ sub getchmod {
 
 sub symchmod {
   my $mode = shift;
+
+  warnings::warnif 'deprecated', '$UMASK being true is deprecated'
+    . ' it will be false by default in the future. This change'
+    . ' is being made because this not the behavior of the unix command'
+    . ' `chmod`. This warning can be disabled by putting explicitly'
+    . ' setting $File::chmod::UMASK to false or any non 2 true value'
+    if $UMASK == 2;
+
   my @return = getsymchmod($mode,@_);
   my $ret = 0;
   for (@_){ $ret++ if CORE::chmod(shift(@return),$_) }
@@ -116,6 +124,7 @@ sub getsymchmod {
 
 sub lschmod {
   my $mode = shift;
+
   return CORE::chmod(getlschmod($mode,@_),@_);
 }
 
@@ -312,6 +321,9 @@ sub t_not {
 =head1 SYNOPSIS
 
   use File::chmod;
+  # this next line is temporarily required until we can remove
+  # UMASK being on by default
+  $File::chmod::UMASK = 0;
 
   # chmod takes all three types
   # these all do the same thing
@@ -340,8 +352,6 @@ mode and an "ls" mode.
 
 Symbolic modes are thoroughly described in your chmod(1) man page, but
 here are a few examples.
-
-  # NEW: if $UMASK is true, symchmod() applies a bit-mask found in $MASK
 
   chmod("+x","file1","file2");	# overloaded chmod(), that is...
   # turns on the execute bit for all users on those two files
