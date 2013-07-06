@@ -318,6 +318,9 @@ sub t_not {
 1;
 # ABSTRACT: Implements symbolic and ls chmod modes
 
+=for test_synopsis
+my ( @files );
+
 =head1 SYNOPSIS
 
   use File::chmod;
