@@ -1,13 +1,16 @@
-Revision history for Perl extension File::chmod.
+Revision history for Perl extension {{$dist->name}}.
 
 {{$NEXT}}
 
 0.32  Sat Jul 28 18:40:00 2007
 	- added copyright and license
 
-0.31  DAMMIT!
+0.31  1999-07-21
+	- fixed getsymchmod() bug
+	- was using map() incorrectly in getmod().
+	- condensed lschmod()
 
-0.30  Wed Jul 21 15:00:00 1999
+0.30  1999-07-21
 	- added umask() honoring for symchmod()
 	- function name changes
 	- fixed debugging bugs
@@ -17,20 +20,20 @@ Revision history for Perl extension File::chmod.
 	- compacted code
 	- see the new REVISIONS section in the docs for explanations
 
-0.22  Sat Apr 24 11:08:27 1999
+0.22  1999-04-24
 	- refixed the untarring error (now it works nicely)
 
-0.20  Sat Apr  3 16:24:14 1999
+0.20  1999-04-03
 	- fixed the untarring error (didn't appear in a directory)
 
-0.12  Sat Feb 13 09:24:56 1999
+0.12  1999-02-13
 	- fixed determine_mode() method for determining mode
 
-0.11  Fri Feb 12 20:21:37 1999
+0.11  1999-02-12
 	- fixed determine_mode() bug
 
-0.10  Fri Feb 12 19:15:04 1999
+0.10  1999-02-12
 	- changed @EXPORT and @EXPORT_OK functions
 
-0.01  Sat Feb  6 17:36:42 1999
+0.01  1999-02-06
 	- original version; created by h2xs 1.18
