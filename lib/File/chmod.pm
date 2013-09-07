@@ -12,7 +12,7 @@ our @EXPORT    = (qw( chmod getchmod ));
 our @EXPORT_OK = (qw( symchmod lschmod getsymchmod getlschmod getmod ));
 
 our $DEBUG     = 1;
-our $UMASK     = 1;
+our $UMASK     = 2;
 our $MASK      = umask;
 
 
