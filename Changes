@@ -1,8 +1,15 @@
 Revision history for Perl extension {{$dist->name}}.
 
 {{$NEXT}}
+	[DEPRECATIONS]
+	- $UMASK is true, this behavior is surprising if you're used to UNIX chmod
+	[NEWS]
+	- new maintainer Caleb Cushing
+	- migrate to Dist::Zilla
+	- add tests (note test failures are likely to be a result of new tests,
+	  the code hasn't really changed)
 
-0.32  Sat Jul 28 18:40:00 2007
+0.32  2007-07-28
 	- added copyright and license
 
 0.31  1999-07-21
