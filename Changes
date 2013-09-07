@@ -1,6 +1,8 @@
 Revision history for Perl extension {{$dist->name}}.
 
 {{$NEXT}}
+
+0.33      2013-09-07
 	[DEPRECATIONS]
 	- $UMASK is true, this behavior is surprising if you're used to UNIX chmod
 	[NEWS]
