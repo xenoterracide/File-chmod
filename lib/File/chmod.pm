@@ -324,8 +324,11 @@ my ( @files );
 =head1 SYNOPSIS
 
   use File::chmod;
-  # this next line is temporarily required until we can remove
-  # UMASK being on by default
+  # It is recommended that you explicitly set $UMASK as the default may change
+  # in the future, 0 is recommended to behave like system chmod, set to 1 if
+  # you want it enabled, so that if later we decide to disable it by default
+  # it won't change your code. $UMASK has been changed to be true by using
+  # numeric value 2 internally
   $File::chmod::UMASK = 0;
 
   # chmod takes all three types
@@ -352,6 +355,14 @@ with its own that gets an octal mode, a symbolic mode (see below), or
 an "ls" mode (see below).  If you wish not to overload chmod(), you can
 export symchmod() and lschmod(), which take, respectively, a symbolic
 mode and an "ls" mode.
+
+An added feature to version 0.30 is the C<$UMASK> variable, explained in
+detail below; if C<symchmod()> is called and this variable is true, then the
+function uses the (also new) C<$MASK> variable (which defaults to C<umask()>)
+as a mask against the new mode. This mode is one by default, and changes the
+behavior from what you would expect if you are used to UNIX C<chmod>.
+B<This may change in the future.>
+
 
 Symbolic modes are thoroughly described in your chmod(1) man page, but
 here are a few examples.
@@ -383,10 +394,6 @@ the modifying of a file's permissions without having to run a system call
 or determining the file's permissions, and then combining that with whatever
 bits are appropriate.  It also operates separately on each file.
 
-An added feature to version 0.30 is the $UMASK variable, explained below; if
-symchmod() is called and this variable is true, then the function uses the
-(also new) $MASK variable (which defaults to umask()) as a mask against the
-new mode.  This is documented below more clearly.
 
 =head2 Functions
 
