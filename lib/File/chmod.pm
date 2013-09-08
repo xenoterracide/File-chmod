@@ -543,7 +543,7 @@ It's gone now.
 
 =item B<fixed set-uid and set-gid bug>
 
-Heh, it seems that in the previous version of File::chmod, the following code
+It seems that in the previous version of File::chmod, the following code
 went along broken:
 
   # or_s sub, File/chmod.pm, v0.21, line 330
