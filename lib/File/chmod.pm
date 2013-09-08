@@ -412,7 +412,7 @@ Returns a list of modified permissions, without chmodding files.
 Accepts any of the three kinds of modes.
 
   @newmodes = getchmod("+x","file1","file2");
-  # @newmodes holds the octal permissons of the files'
+  # @newmodes holds the octal permissions of the files'
   # modes, if they were to be sent through chmod("+x"...)
 
 =back
@@ -432,12 +432,12 @@ Takes an "ls" permissions mode, and chmods each file.
 =item getsymchmod(MODE,FILES)
 
 Returns a list of modified permissions, without chmodding files.
-Accepts only symbolic permisson modes.
+Accepts only symbolic permission modes.
 
 =item getlschmod(MODE,FILES)
 
 Returns a list of modified permissions, without chmodding files.
-Accepts only "ls" permisson modes.
+Accepts only "ls" permission modes.
 
 =item getmod(FILES)
 
@@ -521,7 +521,7 @@ I shorted it up, getting rid a variable.
 The symchmod() function now honors the $UMASK and $MASK variables.  $UMASK is
 a boolean which indicates whether or not to honor the $MASK variable.  $MASK
 holds a umask, and it defaults to umask().  $UMASK defaults to true.  These
-variables are NOT exported.  They must explictly set (i.e. $File::chmod::UMASK
+variables are NOT exported.  They must explicitly set (i.e. $File::chmod::UMASK
 = 0).
 
 =item B<function name changes>
