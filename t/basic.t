@@ -3,10 +3,9 @@ use warnings;
 use Test::More;
 use English '-no_match_vars';
 use File::Temp ();
-
 use File::chmod qw( chmod getmod );
 
-plan skip_all => "Windows perms work differently" if $OSNAME eq 'Win32';
+plan skip_all => "Windows perms work differently" if $OSNAME eq 'MSWin32';
 
 my $tmp = File::Temp->new;
 my $fn  = $tmp->filename;
