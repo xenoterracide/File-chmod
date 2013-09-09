@@ -36,7 +36,7 @@ sub getmod {
 }
 
 
-sub chmod {
+sub chmod { ## no critic ( Subroutines::ProhibitBuiltinHomonyms )
   my $mode = shift;
   my $how = mode($mode);
 
