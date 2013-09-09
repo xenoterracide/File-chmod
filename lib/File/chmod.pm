@@ -397,14 +397,10 @@ bits are appropriate.  It also operates separately on each file.
 
 =func chmod(MODE,FILES)
 
-Exported by Default
-
 Takes an octal, symbolic, or "ls" mode, and then chmods each file
 appropriately.
 
 =func getchmod(MODE,FILES)
-
-Exported by Default
 
 Returns a list of modified permissions, without chmodding files.
 Accepts any of the three kinds of modes.
