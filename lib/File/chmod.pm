@@ -172,7 +172,7 @@ sub mode {
 
 
 sub determine_mode {
-  warn $ERROR{EDECMOD};
+  carp $ERROR{EDECMOD};
   mode(@_);
 }
 
@@ -258,7 +258,7 @@ sub w_not {
 
 
 sub x_or {
-  if ($VAL & 02000){ $DEBUG and warn($ERROR{ENEXLOC}), return }
+  if ($VAL & 02000){ $DEBUG and carp($ERROR{ENEXLOC}), return }
   $W & 1 and $VAL |= 0100;
   $W & 2 and $VAL |= 0010;
   $W & 4 and $VAL |= 0001;
@@ -273,25 +273,25 @@ sub x_not {
 
 
 sub s_or {
-  if ($VAL & 02000){ $DEBUG and warn($ERROR{ENSGLOC}), return }
-  if (not $VAL & 00100){ $DEBUG and warn($ERROR{ENEXUID}), return }
-  if (not $VAL & 00010){ $DEBUG and warn($ERROR{ENEXGID}), return }
+  if ($VAL & 02000){ $DEBUG and carp($ERROR{ENSGLOC}), return }
+  if (not $VAL & 00100){ $DEBUG and carp($ERROR{ENEXUID}), return }
+  if (not $VAL & 00010){ $DEBUG and carp($ERROR{ENEXGID}), return }
   $W & 1 and $VAL |= 04000;
   $W & 2 and $VAL |= 02000;
-  $W & 4 and $DEBUG and warn $ERROR{ENULSID};
+  $W & 4 and $DEBUG and carp $ERROR{ENULSID};
 }
 
 
 sub s_not {
   $W & 1 and $VAL &= ~04000;
   $W & 2 and $VAL &= ~02000;
-  $W & 4 and $DEBUG and warn $ERROR{ENULSID};
+  $W & 4 and $DEBUG and carp $ERROR{ENULSID};
 }
 
 
 sub l_or {
-  if ($VAL & 02010){ $DEBUG and warn($ERROR{ENLOCSG}), return }
-  if ($VAL & 00010){ $DEBUG and warn($ERROR{ENLOCEX}), return }
+  if ($VAL & 02010){ $DEBUG and carp ($ERROR{ENLOCSG}), return }
+  if ($VAL & 00010){ $DEBUG and carp ($ERROR{ENLOCEX}), return }
   $VAL |= 02000;
 }
 
@@ -303,15 +303,15 @@ sub l_not {
 
 sub t_or {
   $W & 1 and $VAL |= 01000;
-  $W & 2 and $DEBUG and warn $ERROR{ENULSBG};
-  $W & 4 and $DEBUG and warn $ERROR{ENULSBO};
+  $W & 2 and $DEBUG and carp $ERROR{ENULSBG};
+  $W & 4 and $DEBUG and carp $ERROR{ENULSBO};
 }
 
 
 sub t_not {
   $W & 1 and $VAL &= ~01000;
-  $W & 2 and $DEBUG and warn $ERROR{ENULSBG};
-  $W & 4 and $DEBUG and warn $ERROR{ENULSBO};
+  $W & 2 and $DEBUG and carp $ERROR{ENULSBG};
+  $W & 4 and $DEBUG and carp $ERROR{ENULSBO};
 }
 
 
