@@ -8,7 +8,7 @@ use base 'Exporter';
 
 # VERSION
 
-our @EXPORT    = (qw( chmod getchmod ));
+our @EXPORT    = (qw( chmod getchmod )); ## no critic ( ProhibitAutomaticExportation )
 our @EXPORT_OK = (qw( symchmod lschmod getsymchmod getlschmod getmod ));
 
 our $DEBUG     = 1;
