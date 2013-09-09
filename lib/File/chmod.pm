@@ -27,7 +27,7 @@ my %ERROR = (
   ENEXGID => "execute bit must be on for set-gid",
   ENULSID => "set-id has no effect for 'others'",
   ENULSBG => "sticky bit has no effect for 'group'",
-  ENULSBO => "sticky bit has no effect for 'others'",
+  ENULSBU => "sticky bit has no effect for 'user'",
 );
 
 sub getmod {
@@ -302,16 +302,16 @@ sub l_not {
 
 
 sub t_or {
-  $W & 1 and $VAL |= 01000;
+  $W & 1 and $DEBUG and carp $ERROR{ENULSBU};
   $W & 2 and $DEBUG and carp $ERROR{ENULSBG};
-  $W & 4 and $DEBUG and carp $ERROR{ENULSBO};
+  $W & 4 and $VAL |= 01000;
 }
 
 
 sub t_not {
-  $W & 1 and $VAL &= ~01000;
+  $W & 1 and $DEBUG and carp $ERROR{ENULSBU};
   $W & 2 and $DEBUG and carp $ERROR{ENULSBG};
-  $W & 4 and $DEBUG and carp $ERROR{ENULSBO};
+  $W & 4 and $VAL &= ~01000;
 }
 
 
