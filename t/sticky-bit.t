@@ -8,8 +8,8 @@ $File::chmod::UMASK = 0;
 
 plan skip_all => "Windows perms work differently" if $OSNAME eq 'MSWin32';
 
-my $tmp = File::Temp->new;
-my $fn  = $tmp->filename;
+my $tmp = File::Temp->newdir;
+my $fn  = $tmp->dirname;
 note sprintf "original state of %s: %o\n", $fn, getmod( $fn );
 
 
