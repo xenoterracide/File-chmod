@@ -474,7 +474,7 @@ found in $MASK.  It defaults to true.
 =head1 PORTING
 
 This is only good on Unix-like boxes.  I would like people to help me work on
-File::chmod for any OS that deserves it.  If you would like to help, please
+L<File::chmod> for any OS that deserves it.  If you would like to help, please
 email me (address below) with the OS and any information you might have on how
 chmod() should work on it; if you don't have any specific information, but
 would still like to help, hey, that's good too.  I have the following
