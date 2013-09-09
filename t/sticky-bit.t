@@ -7,6 +7,7 @@ use File::chmod qw( chmod getmod );
 $File::chmod::UMASK = 0;
 
 plan skip_all => "Windows perms work differently" if $OSNAME eq 'MSWin32';
+plan skip_all => "old File::Temp without newdir" if !File::Temp->can('newdir');
 
 my $tmp = File::Temp->newdir;
 my $fn  = $tmp->dirname;
