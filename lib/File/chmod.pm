@@ -395,18 +395,16 @@ or determining the file's permissions, and then combining that with whatever
 bits are appropriate.  It also operates separately on each file.
 
 
-=head2 Functions
+=func chmod(MODE,FILES)
 
-Exported by default:
-
-=over 4
-
-=item chmod(MODE,FILES)
+Exported by Default
 
 Takes an octal, symbolic, or "ls" mode, and then chmods each file
 appropriately.
 
-=item getchmod(MODE,FILES)
+=func getchmod(MODE,FILES)
+
+Exported by Default
 
 Returns a list of modified permissions, without chmodding files.
 Accepts any of the three kinds of modes.
@@ -415,41 +413,29 @@ Accepts any of the three kinds of modes.
   # @newmodes holds the octal permissions of the files'
   # modes, if they were to be sent through chmod("+x"...)
 
-=back
-
-Exported by request:
-
-=over 4
-
-=item symchmod(MODE,FILES)
+=extra_func symchmod(MODE,FILES)
 
 Takes a symbolic permissions mode, and chmods each file.
 
-=item lschmod(MODE,FILES)
+=extra_func lschmod(MODE,FILES)
 
 Takes an "ls" permissions mode, and chmods each file.
 
-=item getsymchmod(MODE,FILES)
+=extra_func getsymchmod(MODE,FILES)
 
 Returns a list of modified permissions, without chmodding files.
 Accepts only symbolic permission modes.
 
-=item getlschmod(MODE,FILES)
+=extra_func getlschmod(MODE,FILES)
 
 Returns a list of modified permissions, without chmodding files.
 Accepts only "ls" permission modes.
 
-=item getmod(FILES)
+=extra_func getmod(FILES)
 
 Returns a list of the current mode of each file.
 
-=back
-
-=head2 Variables
-
-=over 4
-
-=item $File::chmod::DEBUG
+=var $File::chmod::DEBUG
 
 If set to a true value, it will report warnings, similar to those produced
 by chmod() on your system.  Otherwise, the functions will not report errors.
@@ -458,18 +444,16 @@ same time.  If $File::chmod::DEBUG is true, the function will report an
 error.  If not, you are not warned of the conflict.  It is set to 1 as
 default.
 
-=item $File::chmod::MASK
+=var $File::chmod::MASK
 
 Contains the umask to apply to new file modes when using getsymchmod().  This
 defaults to the return value of umask() at compile time.  Is only applied if
 $UMASK is true.
 
-=item $File::chmod::UMASK
+=var $File::chmod::UMASK
 
 This is a boolean which tells getsymchmod() whether or not to apply the umask
 found in $MASK.  It defaults to true.
-
-=back
 
 =head1 PORTING
 
