@@ -4,6 +4,7 @@ use Test::More;
 use English '-no_match_vars';
 use File::Temp ();
 use File::chmod qw( chmod getmod );
+$File::chmod::UMASK = 0;
 
 plan skip_all => "Windows perms work differently" if $OSNAME eq 'MSWin32';
 
