@@ -14,20 +14,25 @@ note sprintf "original state of %s: %o\n", $fn, getmod( $fn );
 
 
 ok chmod("+t", $fn ), "chmod +t $fn";
-ok -k $fn, "$fn sticky";
+ok -k $fn, "$fn sticky"
+	or diag sprintf "state of %s: %o\n", $fn, getmod( $fn );
 
 ok chmod("-t", $fn ), "chmod -t $fn";
-ok ! -k $fn, "$fn not sticky";
+ok ! -k $fn, "$fn not sticky"
+	or diag sprintf "state of %s: %o\n", $fn, getmod( $fn );
 
 
 ok chmod("o+t", $fn ), "chmod o+t $fn";
-ok -k $fn, "$fn sticky";
+ok -k $fn, "$fn sticky"
+	or diag sprintf "state of %s: %o\n", $fn, getmod( $fn );
 
 ok chmod("o-t", $fn ), "chmod o-t $fn";
-ok ! -k $fn, "$fn not sticky";
+ok ! -k $fn, "$fn not sticky"
+	or diag sprintf "state of %s: %o\n", $fn, getmod( $fn );
 
 
 ok chmod("u+t", $fn ), "chmod u+t $fn";
-ok ! -k $fn, "$fn sticky";
+ok ! -k $fn, "$fn sticky"
+	or diag sprintf "state of %s: %o\n", $fn, getmod( $fn );
 
 done_testing;
