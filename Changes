@@ -2,6 +2,10 @@ Revision history for Perl extension {{$dist->name}}.
 
 {{$NEXT}}
 
+0.38      2013-09-09
+	- fix sticky bit tests for BSD ( Slaven Rezić )
+	- disable windows tests
+
 0.37      2013-09-08
 	- verify and fix RT #78107 chmod('o+t') should set sticky-bit like unix
 	  chmod o+t
