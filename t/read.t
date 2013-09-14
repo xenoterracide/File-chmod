@@ -10,21 +10,14 @@ plan skip_all => "Windows perms work differently" if $OSNAME eq 'MSWin32';
 
 my $tmp = File::Temp->new;
 my $fn  = $tmp->filename;
-note sprintf "original state of %s: %o\n", $fn, getmod( $fn );
 
-subtest '+/-r' => sub {
-	plan skip_all => 'test will not pass as root'
-		if $REAL_USER_ID == 0 or $EFFECTIVE_USER_ID == 0;
+chmod( 0000, $fn );
+note sprintf "state of %s: %o\n", $fn, getmod( $fn );
 
-	ok chmod("+r", $fn ), "chmod +r $fn";
-	ok -r $fn, "$fn readable";
+ok chmod("+r", $fn ), "chmod +r $fn";
+is sprintf( '%o', getmod( $fn ) ), 444, "$fn is 444";
 
-	ok chmod("-r", $fn ), "chmod -r $fn";
-	ok ! -r $fn, "$fn not readable";
-
-	# test a second time because there's a good chance it was the first
-	ok chmod("+r", $fn ), "chmod +r $fn";
-	ok -r $fn, "$fn readable";
-};
+ok chmod("-r", $fn ), "chmod -r $fn";
+is sprintf( '%o', getmod( $fn ) ), 000, "$fn is 000";
 
 done_testing;
