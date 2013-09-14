@@ -2,6 +2,11 @@ Revision history for Perl extension {{$dist->name}}.
 
 {{$NEXT}}
 
+0.39      2013-09-14
+	- fix tests failing to run as user with override privileges
+	  RT #88543 ( zefram )
+	- add more tests
+
 0.38      2013-09-09
 	- fix sticky bit tests for BSD ( Slaven Rezić )
 	- disable windows tests
