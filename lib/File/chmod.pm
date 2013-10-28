@@ -359,7 +359,7 @@ mode and an "ls" mode.
 An added feature to version 0.30 is the C<$UMASK> variable, explained in
 detail below; if C<symchmod()> is called and this variable is true, then the
 function uses the (also new) C<$MASK> variable (which defaults to C<umask()>)
-as a mask against the new mode. This mode is one by default, and changes the
+as a mask against the new mode. This mode is on by default, and changes the
 behavior from what you would expect if you are used to UNIX C<chmod>.
 B<This may change in the future.>
 
