@@ -3,6 +3,7 @@ use warnings;
 use Test::More;
 use English '-no_match_vars';
 use File::Temp ();
+use autodie;
 use File::chmod qw( chmod getmod );
 $File::chmod::UMASK = 0;
 
