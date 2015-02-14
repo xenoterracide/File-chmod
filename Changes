@@ -2,6 +2,10 @@ Revision history for Perl extension {{$dist->name}}.
 
 {{$NEXT}}
 
+0.41      2015-02-14
+	[DEPRECATIONS]
+	- revert the decision to not deprecate UMASK=0, re-deprecating GH #5
+
 0.40      2013-11-15
 	- fix prototype mismatch with chmod() when autodie is used. GH #3 (arrestee)
 	[DEPRECATIONS]
