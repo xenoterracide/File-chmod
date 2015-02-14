@@ -2,6 +2,9 @@ Revision history for Perl extension {{$dist->name}}.
 
 {{$NEXT}}
 
+0.42      2015-02-14
+	- improve deprecation docs
+
 0.41      2015-02-14
 	[DEPRECATIONS]
 	- revert the decision to not deprecate UMASK=0, re-deprecating GH #5
