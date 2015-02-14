@@ -64,6 +64,7 @@ warnings::warnif 'deprecated', '$UMASK being true is deprecated'
   . ' is being made because this not the behavior of the unix command'
   . ' `chmod`. This warning can be disabled by putting explicitly'
   . ' setting $File::chmod::UMASK to false or any non 2 true value'
+  . ' see Github issue #5 '
   if $UMASK == 2;
 
   my @return = getsymchmod($mode,@_);
