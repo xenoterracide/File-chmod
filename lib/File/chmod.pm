@@ -317,7 +317,9 @@ my ( @files );
 =head1 SYNOPSIS
 
   use File::chmod;
-  $File::chmod::UMASK = 0; # you may want this, it ignores the systems umask setting
+  $File::chmod::UMASK = 0; # you PROBABLY want this, it ignores the systems
+                           # and will cause File::chmod to behave more like
+                           # chmod
 
   # chmod takes all three types
   # these all do the same thing
