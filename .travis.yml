@@ -1,5 +1,6 @@
 language: perl
 perl:
+   - 5.20
    - 5.18
    - 5.16
    - 5.14
@@ -10,8 +11,9 @@ before_install:
    - git config --global user.name "TravisCI"
    - git config --global user.email $HOSTNAME":not-for-mail@travis-ci.org"
 install:
+   - cpanm --quiet --notest --with-recommends Dist::Zilla::PluginBundle::Author::XENO
    - cpanm --quiet --notest Dist::Zilla
-   - "dzil authordeps | cpanm --quiet --notest"
-   - "dzil listdeps   | cpanm --verbose"
+   - "dzil authordeps --missing | cpanm --quiet --notest"
+   - "dzil listdeps --author --missing | cpanm --quiet"
 script:
    - dzil smoke --release --author
