@@ -63,8 +63,8 @@ warnings::warnif 'deprecated', '$UMASK being true is deprecated'
   . ' it will be false by default in the future. This change'
   . ' is being made because this not the behavior of the unix command'
   . ' `chmod`. This warning can be disabled by putting explicitly'
-  . ' setting $File::chmod::UMASK to false or any non 2 true value'
-  . ' see Github issue #5 '
+  . ' setting $File::chmod::UMASK to false (0) to act like system chmod,'
+  . ' or any non 2 true value see Github issue #5 '
   if $UMASK == 2;
 
   my @return = getsymchmod($mode,@_);
@@ -325,15 +325,14 @@ my ( @files );
 =head1 SYNOPSIS
 
   use File::chmod;
-  $File::chmod::UMASK = 0; # you PROBABLY want this, it ignores the systems
-                           # and will cause File::chmod to behave more like
-                           # chmod
-  # It is recommended that you explicitly set $UMASK as the default may change
-  # in the future, 0 is recommended to behave like system chmod, set to 1 if
-  # you want it enabled, so that if later we decide to disable it by default
-  # it won't change your code. $UMASK has been changed to be true by using
-  # numeric value 2 internally
   $File::chmod::UMASK = 0;
+  # It is recommended that you explicitly set $File::chmod::UMASK
+  # as the default will change in the future
+  #
+  # 0 is recommended to behave like system chmod
+  # 1 if you want File::chmod to apply your environment set umask.
+  # 2 is how we detect that it's internally set, undef will become the
+  # default in the future, eventually a lexicaly scoped API may be designed
 
   # chmod takes all three types
   # these all do the same thing
